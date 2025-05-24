@@ -6,9 +6,9 @@ on:
       - dev
 
 permissions:
-  contents: write        # allow merges to create commits on main
-  pull-requests: write   # allow PR creation
-  issues: write          # allow closing PR (issue) after merge
+  contents: write
+  pull-requests: write
+  issues: write
 
 jobs:
   build:
