@@ -1,35 +1,76 @@
-name: .NET CI Build
+name: .NET CI Build and Auto Merge
 
 on:
   push:
-    branches: [ "dev" ]
+    branches:
+      - dev
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout Ava.API
-      uses: actions/checkout@v4
-      with:
-        path: ava.api
-    - name: Checkout Ava.Shared
-      uses: actions/checkout@v3
-      with:
-        repository: repasscloud/ava.shared
-        token: ${{ secrets.GITHUB_TOKEN }}
-        path: ava.shared
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
-    - name: Restore dependencies (ava.shared)
-      working-directory: ava.shared
-      run: dotnet restore
-    - name: Restore dependencies (ava.api)
-      working-directory: ava.api
-      run: dotnet restore
-    - name: Build
-      working-directory: ava.api
-      run: dotnet build --configuration Release --no-restore
+      - name: Checkout Ava.API
+        uses: actions/checkout@v4
+        with:
+          path: Ava.Api
+
+      - name: Checkout Ava.Shared
+        uses: actions/checkout@v4
+        with:
+          repository: repasscloud/ava.shared
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: Ava.Shared
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore dependencies (ava.shared)
+        working-directory: Ava.Shared
+        run: dotnet restore
+
+      - name: Restore dependencies (ava.api)
+        working-directory: Ava.Api
+        run: dotnet restore
+
+      - name: Build
+        working-directory: Ava.Api
+        run: dotnet build --configuration Release --no-restore
+
+  auto-pr:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get current branch name
+        id: branch
+        run: echo "branch=$(echo $GITHUB_REF | sed 's#refs/heads/##')" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branchName="${{ steps.branch.outputs.branch }}"
+          gh pr create \
+            --base main \
+            --head $branchName \
+            --title "chore: Auto PR $branchName into main" \
+            --body "Automatically created by gh-actions."
+
+  auto-merge:
+    needs: auto-pr
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge --merge
