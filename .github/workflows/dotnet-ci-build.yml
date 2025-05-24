@@ -1,4 +1,4 @@
-name: .NET CI Build and Auto Merge
+name: .NET CI build merge
 
 on:
   push:
@@ -6,8 +6,9 @@ on:
       - dev
 
 permissions:
-  contents: read
-  pull-requests: write
+  contents: write        # allow merges to create commits on main
+  pull-requests: write   # allow PR creation
+  issues: write          # allow closing PR (issue) after merge
 
 jobs:
   build:
@@ -55,10 +56,30 @@ jobs:
         run: |
           echo "branch=$(echo $GITHUB_REF | sed 's#refs/heads/##')" >> $GITHUB_OUTPUT
 
+      - name: Close any existing dev→main PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branchName="${{ steps.branch.outputs.branch }}"
+          open_prs=$(gh pr list \
+            --state open \
+            --base main \
+            --head "$branchName" \
+            --json number \
+            --jq '.[].number')
+          if [ -n "$open_prs" ]; then
+            for pr in $open_prs; do
+              echo "Closing existing PR #$pr"
+              gh pr close "$pr"
+            done
+          else
+            echo "No open PRs to close"
+          fi
+
       - name: Create Pull Request
         id: create_pr
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           branchName="${{ steps.branch.outputs.branch }}"
           PR_URL=$(gh pr create \
@@ -77,9 +98,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Merge Pull Request
+      - name: Merge Dev→Main Pull Request (REST API)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr merge "${{ steps.create_pr.outputs.pr_number }}" \
-            --merge
+          pr=$(gh pr list \
+              --state open \
+              --base main \
+              --head dev \
+              --limit 1 \
+              --json number \
+              --jq '.[0].number')
+
+          if [ -z "$pr" ]; then
+            echo "❌ No open PR found from dev to main—nothing to merge."
+            exit 0
+          fi
+
+          echo "➡️ Merging PR #$pr via REST"
+          gh api \
+            --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/pulls/$pr/merge" \
+            --input - <<<'{"merge_method":"merge"}'
