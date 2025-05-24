@@ -1,0 +1,17 @@
+_help/
+bin/
+obj/
+*.runtimeconfig.json
+*.runtimeconfig.dev.json
+response*.json
+searchRequestDTO*.json
+x_json*.json
+xxx_send_this_json.json
+Dockerfile.migrator
+compose.old.yaml
+map.html
+airports.csv
+city_lookup.md
+README.md
+start-dev.sh
+**/appsettings.Development.json

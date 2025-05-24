@@ -1,0 +1,13 @@
+services:
+  ava-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5165:5165"
+    networks:
+      - common_net
+
+networks:
+  common_net:
+    external: true
