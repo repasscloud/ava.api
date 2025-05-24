@@ -6,8 +6,9 @@ on:
       - dev
 
 permissions:
-  contents: read
-  pull-requests: write
+  contents: write        # allow merges to create commits on main
+  pull-requests: write   # allow PR creation
+  issues: write          # allow closing PR (issue) after merge
 
 jobs:
   build:
@@ -97,11 +98,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Merge Dev→Main Pull Request (REST)
+      - name: Merge Dev→Main Pull Request (REST API)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # find the single open PR from dev into main
           pr=$(gh pr list \
               --state open \
               --base main \
@@ -115,7 +115,7 @@ jobs:
             exit 0
           fi
 
-          echo "➡️ Merging PR #$pr via REST API"
+          echo "➡️ Merging PR #$pr via REST"
           gh api \
             --method PUT \
             -H "Accept: application/vnd.github+json" \
