@@ -1,74 +1,76 @@
-name: .NET CI Build
+name: .NET CI Build and Auto Merge
 
 on:
   push:
-    branches: [ "dev" ]
+    branches:
+      - dev
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Ava.API
-      uses: actions/checkout@v4
-      with:
-        path: Ava.Api
-    - name: Checkout Ava.Shared
-      uses: actions/checkout@v3
-      with:
-        repository: repasscloud/ava.shared
-        token: ${{ secrets.GITHUB_TOKEN }}
-        path: Ava.Shared
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
-    - name: Restore dependencies (ava.shared)
-      working-directory: Ava.Shared
-      run: dotnet restore
-    - name: Restore dependencies (ava.api)
-      working-directory: Ava.Api
-      run: dotnet restore
-    - name: Build
-      working-directory: Ava.Api
-      run: dotnet build --configuration Release --no-restore
+      - name: Checkout Ava.API
+        uses: actions/checkout@v4
+        with:
+          path: Ava.Api
 
-  pr_and_merge:
+      - name: Checkout Ava.Shared
+        uses: actions/checkout@v4
+        with:
+          repository: repasscloud/ava.shared
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: Ava.Shared
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore dependencies (ava.shared)
+        working-directory: Ava.Shared
+        run: dotnet restore
+
+      - name: Restore dependencies (ava.api)
+        working-directory: Ava.Api
+        run: dotnet restore
+
+      - name: Build
+        working-directory: Ava.Api
+        run: dotnet build --configuration Release --no-restore
+
+  auto-pr:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install jq
-        run: |
-          sudo apt-get update && sudo apt-get install -y jq
+      - name: Get current branch name
+        id: branch
+        run: echo "branch=$(echo $GITHUB_REF | sed 's#refs/heads/##')" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
-        id: create_pr
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Creating PR from dev to main"
-          PR_RESPONSE=$(curl -s -X POST \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/${{ github.repository }}/pulls \
-            -d '{"title":"chore: Merge dev into main","head":"dev","base":"main"}')
-          echo "$PR_RESPONSE"
-          PR_NUMBER=$(echo "$PR_RESPONSE" | jq -r '.number')
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          branchName="${{ steps.branch.outputs.branch }}"
+          gh pr create \
+            --base main \
+            --head $branchName \
+            --title "chore: Auto PR $branchName into main" \
+            --body "Automatically created by gh-actions."
 
-      - name: Merge Pull Request
+  auto-merge:
+    needs: auto-pr
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge pull request
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MERGE_METHOD: merge
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Merging PR #${{ steps.create_pr.outputs.pr_number }}"
-          curl -s -X PUT \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/${{ github.repository }}/pulls/${{ steps.create_pr.outputs.pr_number }}/merge \
-            -d '{"merge_method":"'"$MERGE_METHOD"'"}'
-
+          gh pr merge --merge
