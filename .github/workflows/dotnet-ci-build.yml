@@ -55,6 +55,25 @@ jobs:
         run: |
           echo "branch=$(echo $GITHUB_REF | sed 's#refs/heads/##')" >> $GITHUB_OUTPUT
 
+      - name: Close any existing dev→main PRs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branchName="${{ steps.branch.outputs.branch }}"
+          open_prs=$(gh pr list \
+            --state open \
+            --base main \
+            --head "$branchName" \
+            --format "{{.Number}}")
+          if [ -n "$open_prs" ]; then
+            for pr in $open_prs; do
+              echo "Closing existing PR #$pr"
+              gh pr close "$pr" --delete-branch
+            done
+          else
+            echo "No open PRs to close"
+          fi
+
       - name: Create Pull Request
         id: create_pr
         env:
@@ -77,9 +96,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Merge Pull Request
+      - name: Merge Dev→Main Pull Request
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr merge "${{ steps.create_pr.outputs.pr_number }}" \
-            --merge
+          # find the single open PR from dev into main
+          pr=$(gh pr list \
+              --state open \
+              --base main \
+              --head dev \
+              --limit 1 \
+              --format "{{.Number}}")
+
+          if [ -z "$pr" ]; then
+            echo "❌ No open PR found from dev to main—nothing to merge."
+            exit 0
+          fi
+
+          echo "➡️ Merging PR #$pr"
+          gh pr merge "$pr" --merge --delete-branch
+
