@@ -64,7 +64,8 @@ jobs:
             --state open \
             --base main \
             --head "$branchName" \
-            --format "{{.Number}}")
+            --json number \
+            --jq '.[].number')
           if [ -n "$open_prs" ]; then
             for pr in $open_prs; do
               echo "Closing existing PR #$pr"
@@ -87,6 +88,7 @@ jobs:
             --body "Automatically created by gh-actions.")
           PR_NUMBER=${PR_URL##*/}
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
 
   auto-merge:
     needs: auto-pr
