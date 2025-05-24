@@ -57,7 +57,7 @@ jobs:
 
       - name: Close any existing dev→main PRs
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           branchName="${{ steps.branch.outputs.branch }}"
           open_prs=$(gh pr list \
@@ -78,7 +78,7 @@ jobs:
       - name: Create Pull Request
         id: create_pr
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           branchName="${{ steps.branch.outputs.branch }}"
           PR_URL=$(gh pr create \
@@ -99,7 +99,7 @@ jobs:
 
       - name: Merge Dev→Main Pull Request
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # find the single open PR from dev into main
           pr=$(gh pr list \
