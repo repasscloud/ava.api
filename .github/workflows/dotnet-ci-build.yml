@@ -1,4 +1,4 @@
-name: .NET CI Build and Auto Merge
+name: .NET CI build merge
 
 on:
   push:
