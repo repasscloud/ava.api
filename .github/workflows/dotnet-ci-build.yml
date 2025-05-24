@@ -69,7 +69,7 @@ jobs:
           if [ -n "$open_prs" ]; then
             for pr in $open_prs; do
               echo "Closing existing PR #$pr"
-              gh pr close "$pr" --delete-branch
+              gh pr close "$pr"
             done
           else
             echo "No open PRs to close"
@@ -89,7 +89,6 @@ jobs:
           PR_NUMBER=${PR_URL##*/}
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
-
   auto-merge:
     needs: auto-pr
     runs-on: ubuntu-latest
@@ -108,7 +107,8 @@ jobs:
               --base main \
               --head dev \
               --limit 1 \
-              --format "{{.Number}}")
+              --json number \
+              --jq '.[0].number')
 
           if [ -z "$pr" ]; then
             echo "❌ No open PR found from dev to main—nothing to merge."
@@ -116,5 +116,4 @@ jobs:
           fi
 
           echo "➡️ Merging PR #$pr"
-          gh pr merge "$pr" --merge --delete-branch
-
+          gh pr merge "$pr" --merge
