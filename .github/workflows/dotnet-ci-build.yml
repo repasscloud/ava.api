@@ -6,9 +6,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout Ava.API
       uses: actions/checkout@v4
@@ -33,3 +31,44 @@ jobs:
     - name: Build
       working-directory: Ava.Api
       run: dotnet build --configuration Release --no-restore
+
+  pr_and_merge:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install jq
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Create Pull Request
+        id: create_pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Creating PR from dev to main"
+          PR_RESPONSE=$(curl -s -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/pulls \
+            -d '{"title":"chore: Merge dev into main","head":"dev","base":"main"}')
+          echo "$PR_RESPONSE"
+          PR_NUMBER=$(echo "$PR_RESPONSE" | jq -r '.number')
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Merge Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_METHOD: merge
+        run: |
+          echo "Merging PR #${{ steps.create_pr.outputs.pr_number }}"
+          curl -s -X PUT \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/${{ steps.create_pr.outputs.pr_number }}/merge \
+            -d '{"merge_method":"'"$MERGE_METHOD"'"}'
+
