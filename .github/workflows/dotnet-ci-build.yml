@@ -50,7 +50,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get current branch name
+      - name: Get current branch
         id: branch
         run: |
           echo "branch=$(echo $GITHUB_REF | sed 's#refs/heads/##')" >> $GITHUB_OUTPUT
@@ -58,7 +58,7 @@ jobs:
       - name: Create Pull Request
         id: create_pr
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           branchName="${{ steps.branch.outputs.branch }}"
           PR_URL=$(gh pr create \
@@ -77,9 +77,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Merge pull request
+      - name: Merge Pull Request
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR_NUMBER="${{ steps.create_pr.outputs.pr_number }}"
-          gh pr merge "$PR_NUMBER" --merge --delete-branch
+          gh pr merge "${{ steps.create_pr.outputs.pr_number }}" \
+            --merge
