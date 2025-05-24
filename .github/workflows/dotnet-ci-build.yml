@@ -6,8 +6,8 @@ on:
       - dev
 
 permissions:
-  contents: read            # you only need read on repo contents in this job
-  pull-requests: write      # allow creating & merging PRs
+  contents: read
+  pull-requests: write
 
 jobs:
   build:
