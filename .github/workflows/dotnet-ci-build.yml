@@ -5,6 +5,10 @@ on:
     branches:
       - dev
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -46,20 +50,24 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get current branch name
+      - name: Get current branch
         id: branch
-        run: echo "branch=$(echo $GITHUB_REF | sed 's#refs/heads/##')" >> $GITHUB_OUTPUT
+        run: |
+          echo "branch=$(echo $GITHUB_REF | sed 's#refs/heads/##')" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
+        id: create_pr
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           branchName="${{ steps.branch.outputs.branch }}"
-          gh pr create \
+          PR_URL=$(gh pr create \
             --base main \
-            --head $branchName \
+            --head "$branchName" \
             --title "chore: Auto PR $branchName into main" \
-            --body "Automatically created by gh-actions."
+            --body "Automatically created by gh-actions.")
+          PR_NUMBER=${PR_URL##*/}
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
   auto-merge:
     needs: auto-pr
@@ -69,8 +77,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Merge pull request
+      - name: Merge Pull Request
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr merge --merge
+          gh pr merge "${{ steps.create_pr.outputs.pr_number }}" \
+            --merge
