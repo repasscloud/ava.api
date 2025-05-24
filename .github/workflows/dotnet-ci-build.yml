@@ -97,7 +97,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Merge Dev→Main Pull Request
+      - name: Merge Dev→Main Pull Request (REST)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -115,5 +115,9 @@ jobs:
             exit 0
           fi
 
-          echo "➡️ Merging PR #$pr"
-          gh pr merge "$pr" --merge
+          echo "➡️ Merging PR #$pr via REST API"
+          gh api \
+            --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/pulls/$pr/merge" \
+            --input - <<<'{"merge_method":"merge"}'
