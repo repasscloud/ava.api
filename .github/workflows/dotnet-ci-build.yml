@@ -30,8 +30,6 @@ jobs:
     - name: Restore dependencies (ava.api)
       working-directory: ava.api
       run: dotnet restore
-    - name: Checks
-      run: pwd; ls; tree
-      # - name: Build
-    #   working-directory: ava.api
-    #   run: dotnet build --configuration Release --no-restore
+    - name: Build
+      working-directory: ava.api
+      run: dotnet build --configuration Release --no-restore

@@ -36,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ava.Shared\Ava.Shared.csproj" />
+    <ProjectReference Include="..\ava.shared\Ava.Shared.csproj" />
   </ItemGroup>
 
 </Project>
