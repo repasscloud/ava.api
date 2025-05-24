@@ -13,23 +13,23 @@ jobs:
     - name: Checkout Ava.API
       uses: actions/checkout@v4
       with:
-        path: ava.api
+        path: Ava.Api
     - name: Checkout Ava.Shared
       uses: actions/checkout@v3
       with:
         repository: repasscloud/ava.shared
         token: ${{ secrets.GITHUB_TOKEN }}
-        path: ava.shared
+        path: Ava.Shared
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 9.0.x
     - name: Restore dependencies (ava.shared)
-      working-directory: ava.shared
+      working-directory: Ava.Shared
       run: dotnet restore
     - name: Restore dependencies (ava.api)
-      working-directory: ava.api
+      working-directory: Ava.Api
       run: dotnet restore
     - name: Build
-      working-directory: ava.api
+      working-directory: Ava.Api
       run: dotnet build --configuration Release --no-restore
