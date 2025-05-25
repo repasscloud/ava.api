@@ -1,21 +1,30 @@
-# Step 1: Use official .NET SDK to build the app
-FROM mcr.microsoft.com/dotnet/sdk:9.0.200-alpine3.20-arm64v8 AS build
-WORKDIR /app
+# Step 1: Use unofficial .NET SDK to build the app
+FROM repasscloud/dotnet-sdk-preloaded:9.0.300 AS build
 
 # Copy only the project file(s) first for caching purposes.
-COPY *.csproj ./
+COPY Ava.API/*.csproj /app/Ava.API/
+COPY Ava.Shared/*.csproj /app/Ava.Shared/
+
+WORKDIR /app/Ava.API
 
 # Use BuildKit cache mount to cache NuGet packages.
 RUN --mount=type=cache,target=/root/.nuget/packages dotnet restore
 
 # Now copy the rest of the source code.
-COPY . .
+COPY Ava.API /app/Ava.API/
+COPY Ava.Shared /app/Ava.Shared/
 
 # Build and publish the app.
 RUN dotnet publish -c Release -o /out
 
 # Step 2: Use the official ASP.NET Core runtime image to run the app
-FROM mcr.microsoft.com/dotnet/aspnet:9.0.2-alpine3.21-arm64v8
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine3.21
+
+# Metadata
+LABEL maintainer="hello@repasscloud.com"
+LABEL version="2.3.5"
+LABEL description="Ava.API Docker Image"
+
 WORKDIR /app
 COPY --from=build /out .
 

@@ -1,0 +1,50 @@
+name: .NET CI Build
+
+on:
+  pull_request:
+    branches:
+      - dev
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Ava.API
+        uses: actions/checkout@v4
+        with:
+          path: Ava.API
+
+      - name: Checkout Ava.Shared
+        uses: actions/checkout@v4
+        with:
+          repository: repasscloud/ava.shared
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: Ava.Shared
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore dependencies (ava.shared)
+        working-directory: Ava.Shared
+        run: dotnet restore
+
+      - name: Restore dependencies (ava.api)
+        working-directory: Ava.API
+        run: dotnet restore
+
+      - name: Build
+        working-directory: Ava.API
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Build the Docker image
+        run: docker build . --file Ava.API/Dockerfile --tag ava.shared:$(date +%s)
