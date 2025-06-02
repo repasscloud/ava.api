@@ -30,9 +30,30 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update=".github\**">
+      <ExcludeFromSourceControl>true</ExcludeFromSourceControl>
+    </None>
+    <None Update=".gitignore">
+      <ExcludeFromSourceControl>true</ExcludeFromSourceControl>
+    </None>
+    <None Update="update_nuget_packages.sh">
+      <ExcludeFromSourceControl>true</ExcludeFromSourceControl>
+    </None>
+    <None Update="ava_version">
+      <ExcludeFromSourceControl>true</ExcludeFromSourceControl>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="_help\**" />
     <Content Remove="_help\**" />
     <EmbeddedResource Remove="_help\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove=".github\**" />
+    <None Remove=".gitignore;update_nuget_packages.sh;ava_version" />
+    <EmbeddedResource Remove=".github\**" />
   </ItemGroup>
 
   <ItemGroup>

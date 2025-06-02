@@ -22,7 +22,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine3.21
 
 # Metadata
 LABEL maintainer="hello@repasscloud.com"
-LABEL version="2.3.5"
+LABEL version="2.3.17"
 LABEL description="Ava.API Docker Image"
 
 WORKDIR /app
