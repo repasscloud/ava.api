@@ -4,6 +4,9 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+    // Kernal BoH Stuff
+    public DbSet<VersionInfo> VersionInfos { get; set; }
+
     // Amadeus DbSets
     public DbSet<AmadeusOAuthToken> AmadeusOAuthTokens { get; set; }
 
