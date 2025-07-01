@@ -5,10 +5,12 @@ namespace Ava.API.Controllers;
 public class PoliciesController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILoggerService _loggerService;
 
-    public PoliciesController(ApplicationDbContext context)
+    public PoliciesController(ApplicationDbContext context, ILoggerService loggerService)
     {
         _context = context;
+        _loggerService = loggerService; ;
     }
 
     // POST: api/avaClient
@@ -40,6 +42,7 @@ public class PoliciesController : ControllerBase
                 Id = tp.Id,
                 PolicyName = tp.PolicyName,
                 AvaClientId = tp.AvaClientId,
+                AvaClientName = string.Empty,
                 Currency = tp.DefaultCurrencyCode,
                 MaxFlightPrice = tp.MaxFlightPrice,
                 DefaultFlightSeating = tp.DefaultFlightSeating,
@@ -56,6 +59,21 @@ public class PoliciesController : ControllerBase
         {
             return NotFound();
         }
+
+        var clientName = await _context.AvaClients
+            .Where(a => a.Id == tp.AvaClientId)
+            .Select(a => a.CompanyName)
+            .FirstOrDefaultAsync();
+
+        if (clientName == null)
+        {
+            await _loggerService.LogErrorAsync(
+                $"Value 'clientName' is null error for PoliciesController.GetTravelPolicyInterResultById using travelPolicyId='{travelPolicyId}'."
+            );
+            return NotFound();
+        }
+
+        tp.AvaClientName = clientName;
 
         return Ok(tp);
     }
