@@ -531,18 +531,18 @@ public class AvaClientController : ControllerBase
         // Lookup
         var client = await _context.AvaClients
             .FirstOrDefaultAsync(c =>
-                c.ClientId               == sv
-            || EF.Functions.ILike(c.CompanyName, sv + "%")    // partial, case-insensitive
-            || c.TaxId                 == sv
-            || c.AdminPersonEmail      == sv
-            || c.BillingPersonEmail    == sv
-            || c.ContactPersonEmail    == sv
-            || c.AdminPersonPhone      == sv
-            || c.BillingPersonPhone    == sv
-            || c.ContactPersonPhone    == sv
-            || c.DefaultTravelPolicyId == sv
-            || c.LicenseAgreementId    == sv
-        );
+                EF.Functions.ILike(c.ClientId, sv + "%") ||
+                EF.Functions.ILike(c.CompanyName, sv + "%") ||
+                (c.TaxId != null && EF.Functions.ILike(c.TaxId, sv + "%")) ||
+                (c.AdminPersonEmail != null && EF.Functions.ILike(c.AdminPersonEmail, sv + "%")) ||
+                (c.BillingPersonEmail != null && EF.Functions.ILike(c.BillingPersonEmail, sv + "%")) ||
+                EF.Functions.ILike(c.ContactPersonEmail, sv + "%") ||
+                (c.AdminPersonPhone != null && EF.Functions.ILike(c.AdminPersonPhone, sv + "%")) ||
+                (c.BillingPersonPhone != null && EF.Functions.ILike(c.BillingPersonPhone, sv + "%")) ||
+                EF.Functions.ILike(c.ContactPersonPhone, sv + "%") ||
+                (c.DefaultTravelPolicyId != null && EF.Functions.ILike(c.DefaultTravelPolicyId, sv + "%")) ||
+                (c.LicenseAgreementId != null && EF.Functions.ILike(c.LicenseAgreementId, sv + "%"))
+            );
 
         if (client is null)
         {
