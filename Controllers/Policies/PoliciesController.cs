@@ -26,6 +26,9 @@ public class PoliciesController : ControllerBase
 
         if (travelPolicy == null)
         {
+            await _loggerService.LogErrorAsync(
+                $"TravelPolicy not found with TravelPolicyId={id}."
+            );
             return NotFound();
         }
 
@@ -36,27 +39,17 @@ public class PoliciesController : ControllerBase
     public async Task<IActionResult> GetTravelPolicyInterResultById(string travelPolicyId)
     {
         var tp = await _context.TravelPolicies
-            .Where(c => c.Id == travelPolicyId)
-            .Select(tp => new TravelPolicyBookingContextDTO
-            {
-                Id = tp.Id,
-                PolicyName = tp.PolicyName,
-                AvaClientId = tp.AvaClientId,
-                AvaClientName = string.Empty,
-                Currency = tp.DefaultCurrencyCode,
-                MaxFlightPrice = tp.MaxFlightPrice,
-                DefaultFlightSeating = tp.DefaultFlightSeating,
-                MaxFlightSeating = tp.MaxFlightSeating,
-                CabinClassCoverage = tp.CabinClassCoverage,
-                FlightBookingTimeAvailableFrom = tp.FlightBookingTimeAvailableFrom,
-                FlightBookingTimeAvailableTo = tp.FlightBookingTimeAvailableTo,
-                IncludedAirlineCodes = tp.IncludedAirlineCodes,
-                ExcludedAirlineCodes = tp.ExcludedAirlineCodes,
-            })
-            .FirstOrDefaultAsync();
+                    .Include(tp => tp.Regions)
+                    .Include(tp => tp.Continents)
+                    .Include(tp => tp.Countries)
+                    .Include(tp => tp.DisabledCountries)
+                    .FirstOrDefaultAsync(tp => tp.Id == travelPolicyId);
 
         if (tp == null)
         {
+            await _loggerService.LogErrorAsync(
+                $"TravelPolicy not found using PoliciesController.GetTravelPolicyInterResultById using travelPolicyId={travelPolicyId}."
+            );
             return NotFound();
         }
 
@@ -73,7 +66,39 @@ public class PoliciesController : ControllerBase
             return NotFound();
         }
 
-        tp.AvaClientName = clientName;
+        var regionNames = tp.Regions.Select(r => r.Name).ToList();
+        var continentNames = tp.Continents.Select(c => c.Name).ToList();
+        var countryNames = tp.Countries.Select(c => c.Name).ToList();
+        var disabledCountryNames = tp.DisabledCountries.Select(c => c.Country?.Name).ToList();
+
+        var travelPolicy = new TravelPolicyBookingContextDTO
+        {
+            Id = tp.Id,
+            PolicyName = tp.PolicyName,
+            AvaClientId = tp.AvaClientId,
+            AvaClientName = clientName,
+            Currency = tp.DefaultCurrencyCode,
+            MaxFlightPrice = tp.MaxFlightPrice,
+            DefaultFlightSeating = tp.DefaultFlightSeating,
+            MaxFlightSeating = tp.MaxFlightSeating,
+            CabinClassCoverage = tp.CabinClassCoverage,
+            NonStopFlight = tp.NonStopFlight,
+            FlightBookingTimeAvailableFrom = tp.FlightBookingTimeAvailableFrom,
+            FlightBookingTimeAvailableTo = tp.FlightBookingTimeAvailableTo,
+            EnableSaturdayFlightBookings = tp.EnableSaturdayFlightBookings,
+            EnableSundayFlightBookings = tp.EnableSundayFlightBookings,
+            DefaultCalendarDaysInAdvanceForFlightBooking = tp.DefaultCalendarDaysInAdvanceForFlightBooking,
+            IncludedAirlineCodes = tp.IncludedAirlineCodes,
+            ExcludedAirlineCodes = tp.ExcludedAirlineCodes,
+            Regions = regionNames,
+            Continents = continentNames,
+            Countries = countryNames,
+        };
+
+        if (disabledCountryNames?.Count > 0)
+        {
+            travelPolicy.DisabledCountries = disabledCountryNames!;
+        }
 
         return Ok(tp);
     }
