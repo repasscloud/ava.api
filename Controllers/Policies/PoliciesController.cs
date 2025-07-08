@@ -58,7 +58,7 @@ public class PoliciesController : ControllerBase
             .Select(a => a.CompanyName)
             .FirstOrDefaultAsync();
 
-        if (clientName == null)
+        if (string.IsNullOrEmpty(clientName))
         {
             await _loggerService.LogErrorAsync(
                 $"Value 'clientName' is null error for PoliciesController.GetTravelPolicyInterResultById using travelPolicyId='{travelPolicyId}'."
