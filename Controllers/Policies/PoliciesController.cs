@@ -101,6 +101,6 @@ public class PoliciesController : ControllerBase
             travelPolicy.DisabledCountries = disabledCountryNames!;
         }
 
-        return Ok(travelPolicy.AvaClientName);
+        return Ok(travelPolicy);
     }
 }
