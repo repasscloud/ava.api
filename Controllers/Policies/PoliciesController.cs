@@ -35,7 +35,7 @@ public class PoliciesController : ControllerBase
         return Ok(travelPolicy);
     }
 
-    [HttpGet("travel/inter-result/{travelPolicyId}")]
+    [HttpGet("travel/inter-result2/{travelPolicyId}")]
     public async Task<IActionResult> GetTravelPolicyInterResultById(string travelPolicyId)
     {
         var tp = await _context.TravelPolicies
