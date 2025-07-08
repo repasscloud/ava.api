@@ -35,7 +35,7 @@ public class PoliciesController : ControllerBase
         return Ok(travelPolicy);
     }
 
-    [HttpGet("travel/inter-result2/{travelPolicyId}")]
+    [HttpGet("travel/inter-result/{travelPolicyId}")]
     public async Task<IActionResult> GetTravelPolicyInterResultById(string travelPolicyId)
     {
         var tp = await _context.TravelPolicies
@@ -93,6 +93,7 @@ public class PoliciesController : ControllerBase
             Regions = regionNames,
             Continents = continentNames,
             Countries = countryNames,
+            MaxResults = tp.MaxResults,
         };
 
         if (disabledCountryNames?.Count > 0)
@@ -100,6 +101,6 @@ public class PoliciesController : ControllerBase
             travelPolicy.DisabledCountries = disabledCountryNames!;
         }
 
-        return Ok(tp);
+        return Ok(travelPolicy);
     }
 }
